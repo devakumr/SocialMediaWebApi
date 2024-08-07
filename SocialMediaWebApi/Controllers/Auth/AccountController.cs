@@ -27,13 +27,13 @@ namespace Api.Controllers.Auth
             return Ok(result);
         }
 
-        [HttpPost]
+        //[HttpPost]
         
-        public async Task<ActionResult<String>> UserLogin([FromBody] UserLoginModel  request)
-        {
-            var result= await Mediator.Send(new UserLoginInfo().Command { Param = request});
-            return Ok(result);
-        }
+        //public async Task<ActionResult<String>> UserLogin([FromBody] UserLoginModel  request)
+        //{
+        //    var result= await Mediator.Send(new UserLoginInfo().Command { Param = request});
+        //    return Ok(result);
+        //}
     }
 
      
