@@ -28,5 +28,7 @@ namespace Domain.Auth.Account
         [Required]
         [StringLength(10, ErrorMessage = "Gender cannot be longer than 10 characters.")]
         public string? Gender { get; set; }
+
+     
     }
 }

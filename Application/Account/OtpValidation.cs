@@ -7,6 +7,7 @@ using Persistence;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Application.Auth.Account
 {
@@ -14,7 +15,7 @@ namespace Application.Auth.Account
     {
         public class Command : IRequest<ApiResponse<string>>
         {
-            public OtpValidationModel param { get; set; }
+            public OtpValidationModel Param { get; set; }
         }
 
         public class Handler : IRequestHandler<Command, ApiResponse<string>>
@@ -30,53 +31,59 @@ namespace Application.Auth.Account
 
             public async Task<ApiResponse<string>> Handle(Command request, CancellationToken cancellationToken)
             {
-                var userOtp = request.param;
-                var email = userOtp.Email;
+                var userOtp = request.Param;
+                var providedEmail = userOtp.Email;
                 var providedOtp = userOtp.Otp;
 
-                if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(providedOtp))
+                if (string.IsNullOrEmpty(providedEmail) || string.IsNullOrEmpty(providedOtp))
                 {
                     return ApiResponseHelper.CreateErrorResponse("INVALID_INPUT", "Email or OTP cannot be null or empty.");
                 }
 
                 try
                 {
-                    // Construct the cache key for OTP and user data
-                    var otpCacheKey = $"{email}_Otp";
-                    var userCacheKey = $"{email}_UserData";
+                    // Construct the cache keys for OTP and user data
+                    var otpCacheKey = $"{providedEmail}_Otp";
+                    var userCacheKey = $"{providedEmail}_UserData";
 
-                    // Retrieve OTP from cache
+                    // Retrieve and decrypt OTP from cache
                     var encryptedOtp = await _distributedCache.GetStringAsync(otpCacheKey);
                     if (encryptedOtp == null)
                     {
                         return ApiResponseHelper.CreateErrorResponse("OTP_NOT_FOUND", "OTP not found or expired.");
                     }
-
                     var cachedOtp = EncryptionUtility.Decrypt(encryptedOtp);
+
                     if (providedOtp != cachedOtp)
                     {
                         return ApiResponseHelper.CreateErrorResponse("INVALID_OTP", "Invalid OTP.");
                     }
 
-                    // Retrieve user data from cache
+                    // Retrieve and decrypt user data from cache
                     var encryptedUserData = await _distributedCache.GetStringAsync(userCacheKey);
                     if (encryptedUserData == null)
                     {
                         return ApiResponseHelper.CreateErrorResponse("USER_NOT_FOUND", "User data not found or expired.");
                     }
-
                     var userData = EncryptionUtility.Decrypt(encryptedUserData);
-                    var user = Newtonsoft.Json.JsonConvert.DeserializeObject<UserModel>(userData);
+                    var user = JsonConvert.DeserializeObject<UserModel>(userData);
 
-                    // Save the user to the database
-                    _context.Users.Add(user);
-                    await _context.SaveChangesAsync(cancellationToken);
+                    // Validate the user information
+                    if (user != null && providedEmail == user.Email)
+                    {
+                        user.Password= EncryptionUtility.Encrypt(user.Password);    
+                        // Add the user to the database
+                        _context.Users.Add(user);
+                        await _context.SaveChangesAsync(cancellationToken);
 
-                    // Clean up cache
-                    await _distributedCache.RemoveAsync(otpCacheKey, cancellationToken);
-                    await _distributedCache.RemoveAsync(userCacheKey, cancellationToken);
+                        // Clean up the cache after successful registration
+                        await _distributedCache.RemoveAsync(otpCacheKey, cancellationToken);
+                        await _distributedCache.RemoveAsync(userCacheKey, cancellationToken);
 
-                    return ApiResponseHelper.CreateSuccessResponse("successfully.");
+                        return ApiResponseHelper.CreateSuccessResponse("USER_REGISTERED", "User registered successfully.");
+                    }
+
+                    return ApiResponseHelper.CreateErrorResponse("REGISTRATION_FAILED", "Failed to register the user.");
                 }
                 catch (Exception ex)
                 {

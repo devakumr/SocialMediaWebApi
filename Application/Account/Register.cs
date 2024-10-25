@@ -7,7 +7,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Persistence;
 using System.Net.Mail;
 using Microsoft.EntityFrameworkCore;
-
+using Newtonsoft.Json;
 
 namespace Application.Auth.Account
 {
@@ -75,7 +75,12 @@ namespace Application.Auth.Account
                         return ApiResponseHelper.CreateErrorResponse("EMAIL_SENDING_ERROR", $"Error sending OTP email: {emailResultMessage}");
                     }
 
-                    var encryptedUserData = EncryptionUtility.Encrypt(Newtonsoft.Json.JsonConvert.SerializeObject(userRequest));
+
+
+
+
+
+                    var encryptedUserData = EncryptionUtility.Encrypt(JsonConvert.SerializeObject(userRequest));
                     var encryptedRegirationOtp = EncryptionUtility.Encrypt(otp);
 
                     var cacheOptions = new DistributedCacheEntryOptions

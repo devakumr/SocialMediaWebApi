@@ -3,13 +3,16 @@ using Domain.Auth.Account;
 using Infrastructure.Security;
 using Infrastructure.Utility;
 using Infrastructure.Utility.EmailUtility;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using Persistence;
-using System.Net;
-using System.Net.Mail;
+using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,8 +30,23 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Regis
 // Configure authentication
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+    var key = jwtSettings["Secret"];
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"]
+    };
 })
 .AddCookie(options =>
 {
@@ -39,13 +57,15 @@ builder.Services.AddAuthentication(options =>
 // Register the custom password hasher
 builder.Services.AddSingleton<IPasswordHasher<UserModel>, CustomPasswordHasher<UserModel>>();
 
+builder.Services.Configure<Application.Account.validateJwtTokenBL.JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:3001", "http://localhost:3002") // Adjust this URL to match your frontend URL
+            policy.WithOrigins("http://localhost:3000", "http://localhost:3001", "http://localhost:3002")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -54,16 +74,18 @@ builder.Services.AddCors(options =>
 // Add authorization
 builder.Services.AddAuthorization();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Swagger/OpenAPI configuration
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//  SMTP settings as a configuration
-
+// SMTP settings as a configuration
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-// Configure the SMTP client as a service
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddDistributedMemoryCache();
+
+builder.Services.AddScoped<IJwtGenerator, JwtGenerator>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IUserAccessor, UserAccessor>();
 
 var app = builder.Build();
 
@@ -75,14 +97,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// Add authentication and authorization middleware
+app.UseCors("AllowSpecificOrigin");
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Use CORS middleware
-app.UseCors("AllowSpecificOrigin");
-
 
 app.MapControllers();
 
