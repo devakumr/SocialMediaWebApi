@@ -25,5 +25,11 @@ namespace Infrastructure.Security
 
             return userIdClaim; // Return the user ID from claims
         }
+        public ClaimsPrincipal GetClaim()
+        {
+            var claim = _httpContextAccessor.HttpContext.User;
+
+            return claim;
+        }
     }
 }

@@ -6,6 +6,6 @@ namespace Infrastructure.Security
     public interface IJwtGenerator
     {
       
-        string GenerateToken(string email); // Add this line
+        string GenerateToken(string userId); // Add this line
     }
 }

@@ -1,12 +1,25 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using API.Controllers;
+using Application.Auth.Account;
+using Application.ContentManagementBl;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
+using static Application.ContentManagementBl.ArticleFormBl;
+
 
 namespace Api.Controllers
 {
-    public class ContentManagementController : Controller
+    public class ContentManagementController : BaseController
     {
-        public IActionResult Index()
+        [Authorize]
+        [HttpPost]
+        public async Task<ActionResult<JObject>> ArticleForm([FromBody] ArticleFormParam p)
         {
-            return View();
+            var result = await Mediator.Send(new ArticleFormBl.Command { Param = p });
+            return Ok(result);
         }
+
+
     }
 }

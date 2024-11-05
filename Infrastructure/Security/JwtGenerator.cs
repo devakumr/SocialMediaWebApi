@@ -28,7 +28,7 @@ namespace Infrastructure.Security
         {
             // Create the token's expiration time
             var expiry = DateTime.UtcNow.AddMinutes(_expiryInMinutes);
-            
+
             // Create the signing credentials using the secret key
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -46,15 +46,15 @@ namespace Infrastructure.Security
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public string GenerateToken(string email)
+        public string GenerateToken(string userId) // Change parameter name for clarity
         {
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.NameIdentifier, userId), // Use NameIdentifier for user ID
                 // You can add more claims if needed
             };
 
-            return CreateToken(Guid.NewGuid().ToString(), claims); // Example of using CreateToken
+            return CreateToken(userId, claims); // Pass actual userId to CreateToken
         }
     }
 }

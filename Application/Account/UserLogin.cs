@@ -60,7 +60,7 @@ namespace Application.Auth.Account
                 try
                 {
                     // Generate a JWT token for the user upon successful login
-                    var token = _jwtGenerator.GenerateToken(user.Email); // You may use user.Id for unique ID
+                    var token = _jwtGenerator.GenerateToken(user.Id?.ToString());// You may use user.Id for unique ID
 
                     if (token == null)
                     {

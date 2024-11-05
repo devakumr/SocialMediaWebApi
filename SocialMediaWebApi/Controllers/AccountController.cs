@@ -24,6 +24,7 @@ namespace Api.Controllers.Auth
            var result = await Mediator.Send(new Register.Command { param = request });
            return Ok(result);
         }
+
         [Authorize]
 
         [HttpPost]
