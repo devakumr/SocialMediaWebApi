@@ -1,7 +1,7 @@
 ﻿using API.Controllers;
 using Application.Account;
 using Application.Auth.Account;
-using Domain.Auth.Account;
+using Domain.DtoClass;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -19,35 +19,39 @@ namespace Api.Controllers.Auth
         [Authorize]
 
         [HttpPost]
-        public async Task<ActionResult<string>> Register([FromBody] UserModel request)
+        public async Task<ActionResult<string>> Register([FromBody] RegisterRequestDto request)
         {
-           var result = await Mediator.Send(new Register.Command { param = request });
+           var result = await Mediator.Send(new RegisterBL.Command { param = request });
            return Ok(result);
         }
 
         [Authorize]
 
         [HttpPost]
-        public async Task<ActionResult<string>> OtpValidation([FromBody] OtpValidationModel request)
+        public async Task<ActionResult<string>> OtpValidation([FromBody] OtpValidationDto request)
         {
-            var result = await Mediator.Send(new OtpValidation.Command { Param = request });
+            var result = await Mediator.Send(new OtpValidationBL.Command { Param = request });
             return Ok(result);
         }
         
 
         [HttpPost]
 
-        public async Task<ActionResult<string>> UserLogin([FromBody] UserLoginModel request)
+        public async Task<ActionResult<string>> UserLogin([FromBody] UserLoginDto request)
         {
-            var result = await Mediator.Send(new UserLogin.Command { Param = request});
+            var result = await Mediator.Send(new UserLoginBL.Command { Param = request});
             return Ok(result);
         }
 
         [HttpPost]
-        public async Task<ActionResult<string>> validateJwtToken(ValidateJwtTokenParam p)
+
+        public async Task<ActionResult<string>> ForgotPassword(ForgotPasswordParam request)
         {
-            return await Mediator.Send(new validateJwtTokenBL.Command { Param = p });
+            var result = await Mediator.Send(new ForgotPasswordBL.Command { Param = request });
+            return Ok(result);
         }
+
+
     }
 
 

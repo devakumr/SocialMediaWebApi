@@ -14,6 +14,7 @@ namespace Infrastructure.Utility.EmailUtility
             this._emailsettings=options.Value;
         }
 
+
         public async Task SendEmail(MailRequest mailRequest)
         {
             var email = new MimeMessage

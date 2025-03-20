@@ -1,5 +1,4 @@
 using Application.Auth.Account;
-using Domain.Auth.Account;
 using Infrastructure.Security;
 using Infrastructure.Utility;
 using Infrastructure.Utility.EmailUtility;
@@ -25,7 +24,7 @@ builder.Services.AddDbContext<DataContext>(options =>
                          b => b.MigrationsAssembly("Persistence")));
 
 // Register MediatR
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Register.Handler).Assembly));
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(RegisterBL.Handler).Assembly));
 
 // Configure authentication
 builder.Services.AddAuthentication(options =>
@@ -70,6 +69,10 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod();
         });
 });
+
+builder.Services.AddIdentity<UserModel, IdentityRole>()
+    .AddEntityFrameworkStores<DataContext>()
+    .AddDefaultTokenProviders();
 
 // Add authorization
 builder.Services.AddAuthorization();

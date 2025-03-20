@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Auth.Account
+namespace Domain.DtoClass
 {
-    public class UserLoginModel
+    public class UserLoginDto
     {
         [Required]
         [EmailAddress]

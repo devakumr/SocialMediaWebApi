@@ -1,4 +1,4 @@
-﻿using Domain.Auth.Account;
+﻿
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -18,6 +18,8 @@ namespace Persistence
         }
 
         public DbSet<UserModel> Users { get; set; }
+
+        public DbSet<UserOTPModel> UserOTP { get; set; }
 
     }
 }
